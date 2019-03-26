@@ -63,6 +63,22 @@ if assemblyId == None:
 
 print('* Retrieving assembly')
 assembly = client.get_assembly(documentId, workspaceId, assemblyId)
+assemblyFeatures = client.get_assembly_features(documentId, workspaceId, assemblyId).json()
+
+def getAssemblyFeatureParameter(name, parameterId):
+    global assemblyFeatures
+    for entry in assemblyFeatures['features']:
+        if entry['message']['name'] == name:
+            for parameter in entry['message']['parameters']:
+                if parameter['message']['parameterId'] == parameterId:
+                    t = parameter['typeName']   
+                    if t == 'BTMParameterNullableQuantity':
+                        if 'isNull' not in parameter['message'] or not parameter['message']['isNull']:
+                            return parameter['message']['expression']
+                    else:
+                        return parameter['message']['value']
+                        
+    return None
 
 # Collecting parts instance from assembly and subassemblies
 instances = {}
@@ -115,6 +131,15 @@ for feature in features:
         if name == '':
             print('! Error: a DOF dones\'t have any name ("'+data['name']+'" should be "dof_...")')
             exit()
+
+        if getAssemblyFeatureParameter(data['name'], 'limitsEnabled'):
+            data['limits'] = [
+                getAssemblyFeatureParameter(data['name'], 'limitAxialZMin'),
+                getAssemblyFeatureParameter(data['name'], 'limitAxialZMax')
+            ]
+        else:
+            data['limits'] = [None, None]
+        print(data['limits'])
         
         relations[child] = [parent, data, name]
         assignParts(child, child)

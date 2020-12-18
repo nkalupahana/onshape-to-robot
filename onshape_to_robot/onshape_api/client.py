@@ -109,7 +109,7 @@ class Client():
     def cache_get(self, method, key, callback, isString = False):
         if type(key) == tuple:
             key = '_'.join(list(key))
-        fileName = method+'__'+key
+        fileName = method+'__'+key[:200]
         dirName = os.path.dirname(os.path.abspath(__file__))+'/cache'
         if not os.path.exists(dirName):
             os.mkdir(dirName)
